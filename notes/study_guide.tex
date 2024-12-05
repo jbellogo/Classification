@@ -8,6 +8,8 @@
 \usepackage{bm}
 
 \usepackage{float}
+\newtheorem{theorem}{Theorem}
+
 
 
 
@@ -27,7 +29,7 @@
 % =====================  BEGIN DOCUMENT 
 % ================================================
 
-\title{Game Theory Project}
+\title{STAT 441 Study}
 \author{Juan Pablo Bello Gonzalez}
 \date{September 2024}
 
@@ -37,239 +39,174 @@
 
 \newpage
 
-
-
-
-\section{Introduction}
-
-Counterfactual regret minimization (CFR) has become a leading algorithm for computing approximate Nash equilibria in imperfect information games. Poker, perhaps the most iconic example of such games, has served as a proving ground for CFR. Variants of the algorithm form the foundation of modern poker bots, some of which have defeated professional players \cite{Int8}.\\  
-
-This paper explains how extensive form games can be used to model imperfect information games and explores the CFR algorithm as introduced in \textit{Regret Minimization in Games with Incomplete Information} by Martin Zinkevich and collaborators \cite{Zinkevich}. The implementation is demonstrated on Kuhn Poker, the simplest variant of poker, providing a foundation for understanding its broader and more computationally intensive applications.
-
-
-\subsection{Kuhn Poker}
-
-Kuhn Poker is a simplified two-player variant of poker designed to study strategic decision-making in games with imperfect information. Each player is dealt one card from a deck of three cards (\(J, Q, K\)), and the remaining card is hidden. Players then take turns deciding whether to check, bet, call, or fold based on their private card and the observed actions of their opponent. In the game, bets consist of one unit of utility for simplicity. The game has a zero-sum payoff structure, where one player's gain equals the other's loss, and the winner is determined by either a showdown or a fold. Despite its simplicity, Kuhn Poker captures key elements of poker, such as bluffing, information asymmetry, and strategic betting, making it a valuable model for exploring game theory concepts \cite{Farina}. Throughout this paper we will use the game of Kuhn poker to illustrate the concepts. 
-
-
-\section{Extensive form games}
-
-Extensive form games provide a framework for modelling sequential games, where players make decisions in a specific order, and utilities are distributed only at the game's conclusion \cite{Int8}. These games have a natural tree representation, with each node corresponding to a decision point for a player or chance and branches representing the available actions. The tree alternates between players at each level, capturing the sequence of decisions and possible outcomes. Terminal nodes, or leaves, represent the end of the game, where payoffs are assigned based on the sequence of actions taken. This structure makes extensive form games particularly suited for modelling games like poker, where players act in turns, and the final utilities depend on the entire sequence of decisions made throughout the game. \textbf{Figure 1} displays the full tree representation of Kuhn Poker:
-
-
-
-\subsection{Imperfect Information}
-Imperfect information games are games in which players do not have complete knowledge of all aspects of the game state, such as the actions or private information of other players. The study of imperfect information games is crucial in fields like game theory, artificial intelligence, and economics, as it mirrors real-world decision-making scenarios where perfect knowledge is rarely available.\\
-
-To model imperfect information in extensive form games, we use \textbf{information sets}, which are groups of game states (or nodes in the game tree) that a player cannot distinguish between when making a decision. Each information set represents the player's uncertainty about the game's exact state at a given point. For example, in Kuhn Poker, Player 1 has three information sets at the first decision level, corresponding to the card they were dealt. If Player 1 is dealt a Jack, their information set is \( I_1 = \{JQ, JK\} \), reflecting uncertainty about whether Player 2 holds a Queen or a King. Similarly, if Player 1 is dealt a Queen, the information set is \( I_2 = \{QJ, QK\} \), and if dealt a King, it is \( I_3 = \{KJ, KQ\} \). These information sets capture both the card Player 1 holds and the hidden information about Player 2’s card.
-
-
-\subsection{Formalizing Extensive Form Games}
-
-According to Zinkevich, a formal definition of an extensive game includes the following:
-
+\section{1. Learning Concepts}
+Learning:
 \begin{itemize}
-\item A finite \textbf{set of players} $N$
-\item A finite set of ordered action \textbf{histories} $H$, such that the empty sequence is in H and every prefix of a sequence in H is also in H. 
-\begin{itemize}
-\item Denote $Z \subseteq H$ as the set of terminal histories, corresponding to the leaves of the tree representation, where the game ends, it is no one's turn, and players receive their utilities.
-\item Denote $A(h) = \{ a : (h,a) \in H \setminus Z\}$ as the actions available for the player whose turn it is after a non-terminal history $h \in H \setminus Z$.
+\item Classification: Categorical outcome
+\item Regression: Continuous outcome
 \end{itemize}
 
-\item A \textbf{player function}, $P: H \setminus Z \rightarrow N$ that specifies the player whose turn it is to act at the end of a given history.
+Supervised: You have labels, ie right answers/confirmation for training data. Easier models than unsupervised. In unsupervised you have to make up distinctive features/categories, you don't even know how many clusters there are.
 
-\item A function $f_i$ that assigns, to every history $h$ where it is player $i$'s turn ($P(h) = i$), a probability measure over the possible actions $A(h)$ at that history. Specifically, $f_i(a|h)$ denotes the probability of player $i$ choosing action $a$ given $h$, with each such probability measure being independent of all others.
+\textbf{Interpretation vs. prediction tradeoff}:
+Complex models like trees and neural netoworks are powerful at predicting but there is little interpretability to what the model coefficients actually mean. 
+
+You can restrict the class of models to allow for easy interpretation, ie trees with tunned hyperparameters. THEN optimize for prediction wihtin this class models. 
+\subsection{Loss}
+MSE
+
+\subsection{Bias-Variance Tradeoff}
+MSE loss can be decomposed into three sources of error: \textbf{Bias, Variance, and Irreducible error} 
+\[ E [ (y_0 - \hat f(x_0))^2]
+= Var(\hat f(x_0))) + [Bias(\hat f(x_0)))]^2 + Var(\epsilon)
+\]
+All three are non-negarive. 
+\begin{itemize}
+\item Variance: How well the model generalizes to other data sets. 
+\item Bias: how well the model fits the training set.
+\end{itemize}
+
+Overfitting: low bias high variance. Perfect fit  from highly flexible model, usually with many hyperparameters, means that the model will have high variance and not predict other test sets as well as it predicts that one. 
+
+Explain the tradeoff:
+- Conflict of trying to simulataneously minimize the two sources of error that prevent supervised learning algorithms from generalizing beyond the training set. 
+
+MSE is the sum of three things, the graph of MSE makes a U, and the graphs of its three components are
+\begin{itemize}
+\item Irreducible error/Var(epsilon). Constant
+\item Variance. Increasing with flexibility. The more flexibility, the worse predictive power to  data sets outside the training set the model will have.
+\item Bias. Decaying as flexibility increases. Higher flexibility $\implies$ lower bias $\implies$  better fit. 
+\end{itemize}
+
+\subsection{Bayes Classifier}
+A classification algorithm takes in a unit with features (a row on a table) and gives a probability distribution over the categories. Baye's classifier says, classify the unit with the most likely class.
+
+\begin{theorem}
+\textbf{Conditional Bayes Error Rate}: For a given obervation $x$, is $1-max_{j} P(Y =j |x)$ the complement of the Bayes classifier probability. 
+\end{theorem}
+
+\begin{theorem}
+\textbf{Overall Bayes Error Rate}:  $1-E[max_{j} P(Y =j |x)]$ the EXPECTATION complement of the Bayes classifier probability. 
+\end{theorem}
+
+\section{2. Practical aspects}
+
+\subsection{overfitting}
+\textbf{Definition:} the model fits the \textbf{random noise} of a \textbf{sample} rather than the generalizable relationship.
+
+Occurs when the model is \textbf{too flexible}. Has too many parameters relative to the number of observations. Advanced learning algorithms are flexible, you don't need a neural network to predict y based on two features, just use some regression.
+
+\subsubsection{Defending against overfitting}
+\begin{itemize}
+\item Fit to training set
+\item Evaluate on test set
+\item split must be chosen AT RANDOM. but fix seed in practice.
+\end{itemize}
 
 
-\item For each player $i \in N$ define their \textbf{information partition}, $\mathcal{I}_i$, as a partition of the set of histories where player $i$ is required to act, $\{ h \in H : P(h) = i \}$. Each member of the partition $I_i \ in \mathcal{I}_i$ is called an information set and it 
-represents the subset of histories indistinguishable to player $i$, based on the information available to them at a specific point in time.
+By splitting the data into test/train, overfitting can be avoided. If you train on 100\% of the data there will be overfitting!
+We build a model based on the training data but evaluate the model on the test data. 
 
-Information sets have the property that for all $h, h' \in I_i$, the available actions must be the same, i.e., $A(h) = A(h')$. 
-\item For each player $i \in N$ define a utility function $u_i: Z \rightarrow \mathbb{R}$ that assigns a real-valued utility to each terminal state $z \in Z$. In extensive form games, player actions may occur at various points in time throughout the game, but utilities are assigned exclusively at the terminal states.
+\subsection{cross-validation}
+Split data into k random subsets of equal size, called folds, then fit a model to each of the possible combinations of k-1 folds and evaluate/test on the remaining fold. Average accuracty scores to obtain a good estimate of the true predictive power of the model.
+
+In extreme case: leave-one-out (LOO) cross validation. It's nonsense for most applications.
+
+\subsection{Evaluation measures}
+\begin{itemize}
+\item Accuracy
+\item Sensitivity 
+\item Specificity
+\item Area under the ROC curve
+\item F
+\end{itemize}
+
+for classification, consider: 
+\begin{itemize}
+\item TP 
+\item FP
+\item RN
+\item FN
+\end{itemize}
+
+the ordering in the name is (Correct label?, model classification label). Correct label? means that those that start with a true: TP, TN were correctly classified. The seonc instance is what that label classification was duh.
+
+\textbf{Confusion Matrix}
+\[
+\begin{array}{|c|c|c|}
+\hline
+ & \text{Predicted Positive} & \text{Predicted Negative} \\
+\hline
+\text{Actual Positive} & TP & FN \\
+\hline
+\text{Actual Negative} & FP & TN \\
+\hline
+\end{array}
+\]
+
+\subsubsection{Accuracy, Sensitivty, and Specificity}
+some formulas for evaluation measures
+\begin{itemize}
+\item Accuracy: (TP+TN)/N, where N is the sum of all four = \#observations or sample size. Also Accuracy = $\frac{1}{n} \sum_{i=1}^n I(y_i = \hat y_i)$
+\item Sensitivity (TRUE POS rate): TP/(TP + FN)
+\item Specificity (TRUE NEG rate): TN/(TN+ FP)
+\end{itemize}
+
+Sensitivity is positive. 
+$1-\text{Specificity}$ is False positive rate. 
+
+Ideally we want high specificty and sensitivity.But a trade off needs to be made. The threshold of prediction... you may want to be conservative in your true predictions (high specificity low sensitiviy) if it is for Cancer diagnosis. But liberal if it is about who gets on a survival boat.
+
+\subsubsection{ROC}
+Area under curve is a measure of the sensitivity/specificity tradeoff. 
+
+\subsubsection{F-measure}
+\[
+F = \frac{2 \times TP}{2 \times TP + FP +FN}
+\]
+
+\begin{itemize}
+\item Higher values are better. 
+\item appropiate for 0/1 classification.
+\end{itemize}
+
+Important: 
+- Sometimes, depending on the context, you may want to always predict false. An example: when there are ratre or uncommon events. 
+- F measure is affected the most by this. Even if you don't predict false all the time, as long as there is a clear bias in the distribution of false classifications, your TP rate will be very low and so your F-measure will be small as well. 
+
+
+\subsubsection{Dealing with rarely occuring categories}
+Not uncommon to have rare categories, ie. categories that occur infrequently.
+\begin{itemize}
+\item Macro averaging: Treat all categories the same. Default of all algorithms. Default of not doing anything in preprocessing.
+\item \textbf{MICRO} averaging: dominate by frequent categories, giving little weight to rare categories.
+\end{itemize}
+
+
+\subsubsection{One-hot-encoding or "factoring" in R}
+Sometimes, variates are given in terms of categories themselves like X2 = "Family role" $\in$ [1 : "Father", 2: "son", 3:"sibling"]. \\
+
+We shouldn't just feed these categories as they are to an algorithm because the scale and ordering provided by the category numbers, $[1,2,3]$ in the prior example, doesn't mean anything real, and could at best add noise to the data, and at worse confoundingly influence the predictions.\\ 
+
+So for a categorical variate with $n$ categories, we take $n-1$ indicator variables to represent the presence of that category in that variate, this is sometimes known as factoring. \\
+
+why not do $n$ indicators, one for each category number? Because that would cause multicolinearity. As the $n-$th indicator is just the absence of the $n-1$ other ones (you can write them in a linear dependence)
+
+\textbf{NOTE:} We often don't leave-one-out in advanced statistical models because they don't always use all variates, or collinearity doesn't affect the model like in regression, where you absoluteley cannot have dependencies between variates.
+
+
+\subsubsection{Variable scaling}
+Do when variables have vastly differnt ranges, helps give bettwr results by making variates more comparable to each other. 
+Scaling is also called standardization.
+
+Scalling methods:
+\begin{itemize}
+\item Scale them to have mean zero and stdev =1 using $x_{scaled} = \frac{x-\bar x}{sd_x}$. Note that indicator variables are not scaled like this, their mean and variance may not be 0,1.
+\item Scale variables to have the same range.
 \end{itemize}
 
 
 
-\subsubsection{Strategies}
-In extensive form games, a strategy profile $\sigma$ is a complete contingent plan for each player $\sigma_i$ that specifies how a player will act at every possible decision point, based on the information available to them at that point. 
-
-For player \(i\), a strategy profile $\sigma_)i$ is a function mapping that player's information sets to probability distributions over the possible actions player $i$ can take at that decision point. This means a strategy effectively serves as a "lookup table" for the entire game, detailing how the player will respond in every possible situation they might encounter. Strategies are defined for all decision nodes within the player’s information sets and exclude terminal nodes, where no decisions are made. 
-
-The traditional solution concept of a two-player extensive game is a Nash equilibrium, defined as strategy profile \(\sigma\) where 
-$
-u_1(\sigma) \geq \max_{\sigma'_1 \in \Sigma_1} u_1(\sigma'_1, \sigma_2), \quad
-u_2(\sigma) \geq \max_{\sigma'_2 \in \Sigma_2} u_2(\sigma_1, \sigma'_2).
-$
-
-Similarly, an approximation of a Nash equilibrium, or \(\epsilon\)-Nash equilibrium, is a strategy profile \(\sigma\) where 
-\[
-u_1(\sigma) + \epsilon \geq \max_{\sigma'_1 \in \Sigma_1} u_1(\sigma'_1, \sigma_2), \quad
-u_2(\sigma) + \epsilon \geq \max_{\sigma'_2 \in \Sigma_2} u_2(\sigma_1, \sigma'_2).
-\]
-
-
-
-\subsection{Kuhn Poker as an extensive form game}
-In the case of Kuhn poker, there are two players, \( N = \{1, 2\} \). To construct the set of histories \( H \), one can conceptualize the game as evolving through levels of a game tree: At level 0, the root node, nature deals one card to each player from the set \( \{J, Q, K\} \). At level 1, Player 1, knowing their own card but not Player 2's, takes an action from \( \{\text{CHECK}, \text{BET}\} \). At level 2, Player 2 responds to Player 1's action. The available actions depend on Player 1's choice: If Player 1 CHECKS, Player 2 can choose \( \{\text{CHECK}, \text{BET}\} \); if Player 1 BETS, Player 2 can choose \( \{\text{FOLD}, \text{CALL}\} \). At level 3, if the game has not ended (i.e., Player 2 BETS in response to Player 1 CHECKING), Player 1 makes the final decision: \( \{\text{FOLD}, \text{CALL}\} \). \\
-
-Some example histories are: Q.K.BET.FOLD, K.J.BET.CALL, and K.J.CHECK.BET.CALL. Note that the histories alternate between players, so \( P(h) = 1 \) for histories of even length, such as \( Q.K \) and \( Q.K.CHECK.BET \). Similarly, \( P(h) = 2 \) for histories of odd length, such as \( Q.K.BET \). Histories provide complete information, but players themselves cannot see the full histories; they only have access to their respective information sets. Player 1 has 6 information sets, labeled A-F in \textbf{Figure 1}, while Player 2 has 6 information sets, labeled P-U. The strategy profile for Kuhn Poker is shown in \textbf{Figure 2} in the Appendices.
-
-
-
-\section{Regret Learning}
-
-Regret is a key concept in \textit{online learning}, where decisions are repeatedly made in imperfect information environments. \\
-
-In a setting with \( N \) experts providing predictions for a time-evolving phenomenon (e.g., stock price), the model compares the experts' predictions to the actual outcomes at each time step, calculating the loss. This loss is then used to update the trust in each expert by adjusting a probability distribution vector \( p_i^t \). Over time, the total expected loss of the algorithm and the loss of individual experts are computed, which allows for evaluating the performance of the model and experts. Regret at time \( T \) is the difference between the algorithm's total loss and the best single expert's loss, indicating how much the model regrets not following the best expert's advice. In games, regret represents the utility lost by not choosing the best response.
-
-\subsubsection{Regret Matching Algorithm}
-
-The Regret Matching algorithm maintains a vector of weights $w_{i,t} = \max(0, R_{i,t})$ assigned to $N$ experts based on regret, $R_{i,t}$. The probability distribution vector $p_i^t$ is then updated as follows: 
-
-\[
-p_i^t = 
-\begin{cases}
-	\frac{w_{i,t}}{\sum_{j \in N} w_{i,t}} & if \sum_{j\in N}w_{i,t} > 0 \\
-	\frac{1}{N} & o.w
-\end{cases}
-\]
-
-In CFR, this system is adapted to update the distribution of possible actions within an information set instead of over experts.
-
-
-
-\subsubsection{Regret Minimization}
-To apply regret in the context of games, the loss from deviating from the best expert's advice is expressed as the difference in utility between any strategy \( \sigma \in \Sigma_i \) chosen by player \( i \) and the utility of the best response strategy \( \sigma^* \). Given $\sigma$, the \textbf{average overall regret} for player $i$ at  $T$ is:
-
-\[ R^T_i = \max_{\sigma^*_i \in \Sigma_i} \sum_{t=1}^T (u_i(\sigma^*_i, \sigma_{-i}^t) - u_i(\sigma^t)) \]
-
-Also consider the average strategy for player $i$ from time 1 to $T$
-
-\[ \bar\sigma^t_i (I)(a) = \frac
-{\sum_{t=1}^T \pi_i^{\sigma^t}(I) \times  \sigma^t (I)(a)} 
-{\sum_{t=1}^T \pi_i^{\sigma^t}(I)} \]
-
-Zinkevich proved that in a two-player zero-sum game at time T, if both player's average overall regret is less than $\epsilon$, then $\bar\sigma^T$ is a $2 \epsilon$ equilibrium. This means that if both players aim to minimize average overall regret, their average strategies will converge to an approximation Nash Equilibrium as $T \to \infty$. Consequently, a corollary of this result is that a regret-minimizing algorithm is capable of computing an approximate Nash equilibrium.\\
-
-
-We cannot immediately proceed with regret minimization because, to compute regret, we would need to know each player's best response \( \sigma^*_i \in \Sigma_i \). If we already knew these strategies, constructing a Nash equilibrium would be trivial. Instead of computing overall regret directly, the approach decomposes the overall regret into a set of additive "made-up" regrets, based on the information sets available to player \( i \), which can be minimized independently. These are called counterfactual regrets. \\
-
-First, consider a particular information set \( I \in \mathcal{I}_i \) and the choices made by player \( i \) in that information set. Define the counterfactual utility \( u_i(\sigma, I) \) as the expected utility, given that information set \( I \) is reached and all players play using strategy \( \sigma \), except for player \( i \), who plays in a way that leads to reaching information set \( I \). \\
-
-Formally, if $\pi ^{\sigma}(h, h')$ is the probability of going from history $h$ to terminal history $h'$, then the counterfactual utility at information set $I$ is given by:
-
-\[ u_i(\sigma, I) = \frac{\sum_{h \in I, h' \in Z} \pi_{-i}^{\sigma}(h) \pi^{\sigma}(h, h')u_i(h')}{\pi_{-i}^{\sigma}(I)} \]
-
-With this counterfactual utility, we can now define the immediate counterfactual regret. For all \( a \in A(I) \), let \( \sigma|_{I \rightarrow a} \) denote the strategy profile identical to \( \sigma \), except that player \( i \) always chooses action \( a \) when in information set \( I \). This allows us to express the immediate counterfactual regret as:
-
-\[
-R_{i, imm}^T(I) = \frac{1}{T} \max_{a \in A(i)} \sum_{t=1}^T \pi_{-i}^{\sigma^t}(I)(u_i(\sigma^t|_{I \rightarrow a}, I) - u_i(\sigma^t, I)) 
-\]
-
-This counterfactual regret is based on the best responses within the information set \( I \), whereas regular average regret is calculated over all possible strategy profiles \( \Sigma_i \), making it more complex. Define positive immediate counterfactual regret as $R_{i,imm}^{T,+} = \max(0, R_{i,imm}^T(I))$. \\
-
-
-So far, we have established that, according to the theory of no-regret learning, minimizing regret leads to an approximation of a Nash equilibrium. However, we now seek a result that demonstrates that minimizing the sum of immediate counterfactual regrets can serve as a proxy for minimizing average regret, and that this approach still yields a Nash equilibrium when the best responses at information sets are aggregated into a full strategy. This result, which was proven by Zinkevich, is as follows:
-
-\[ R^T_i \leq \sum_{I \in \mathcal{I}_i} R_{i,imm}^{T,+}(I) \]
-
-By this result, minimizing immediate counterfactual regret also minimizes overall regret, as the total regret for player $i$ is bounded by the sum of their immediate counterfactual regrets. This allows us to obtain an approximate Nash equilibrium. \\
-
-To obtain $R_{i, imm}^T(I)$, we evaluate the regret for every strategy $a \in A(I)$ for every information set $I \in \mathcal{I}_i$:
-
-\[ 
-R^T_i(I,a) = \frac{1}{T} \sum_{t=1}^T \pi_{-i}^{\sigma^t}(I)(u_i(\sigma^t|_{I \rightarrow a}, I) - u_i(\sigma^t, I)) 
-\]
-
-Similarly, define \( R_{i}^{T,+}(I, a) = \max(0, R_{i}^T(I,a)) \), so that \( R^{T,+}_{i,imm}(I) = \max_{a \in A(I)}(R^{T,+}_i(I,a)) \) represents the optimal immediate counterfactual regret. With \( R^{T,+}_{i,imm}(I) \), we can now update the strategy of player $i$ from \( \sigma^T_i \) to \( \sigma^{T+1}_i \), which is closer to the Nash equilibrium, in a manner similar to updating weights in the foundational \textbf{Regret Matching algorithm}.
-
-\[ 
-\sigma_i^{T+1}(I)(a) = 
-\begin{cases} 
-      \frac{R_i^{T,+}(I,a)}{\sum_{a \in A(I)} R_i^{T,+}(I,a)} & if \sum_{a \in A(I) R_i^{T,+}(I,a) > 0} \\
-      \frac{1}{|A(I)|} & o.w 
-   \end{cases}
-\]
-
-This equation suggests that strategies for actions are updated in proportion to the amount of positive counterfactual regret associated with not choosing that action. If no actions in the information set have positive counterfactual regret, the actions are weighted uniformly with equal probability. The final key theorem that enables CFR, proven by Zinkevich, is that selecting actions according to the equation above guarantees the computation of a Nash equilibrium.
-
-
-
-
-
-\section{Results}
-Zinkevich was able to apply counterfactual regret minimization to compute a near-equilibrium solution for the entire game of two-player poker. For this project, we focused on computing the Nash equilibrium of the simpler variation, Kuhn poker, yielding the results in \textbf{Figure 2}.
-
-
-
-
-
-\newpage
-\section{Appendices}
-\
-%%% IMAGE
-\begin{figure}[H]
-    \centering
-    \textbf{Figure 1}\par\medskip
-\includegraphics[scale=.44]{game_tree}
-    \caption{Game tree of Kuhn Poker \cite{Farina}}
-\end{figure}
-
-\begin{center}
-\textbf{Figure 2: strategy profile corresponding to computed Nash Equilibrium in Kuhn Poker}
-\begin{tabular}{||c | c c c c||c | c c c c||}
-\hline\hline
-
- \multicolumn{10}{||c||}{Strategy profile ($\sigma$)} \\
- 
-\hline\hline
- \multicolumn{5}{||c||}{P1 strategy profile ($\sigma_1$)} & 
- \multicolumn{5}{||c||}{P2 strategy profile ($\sigma_2$)} \\
-
- \hline
- Info Sets & Bet & Call & Check  & Fold &
- Info Sets & Bet & Call & Check  & Fold
- \\ [0.5ex] 
- \hline\hline
- J & 0.2010 & 0 & 0.7989 & 0 & 
- J.BET & 0 & 0.0005 & 0 & 0.9995\\ [1ex] 
- \hline
- Q & 0.0034 & 0 & 0.9965 & 1 & 
- Q.BET & 0 & 0.3687 & 0 & 0.6312\\ [1ex] 
- \hline
- K & 0.5984 & 0 & 0.4015 & 0 & 
- K.BET & 0 & 0.9995 & 0 & 0.0005\\ [1ex] 
- \hline
- J.CHECK.BET & 0 & 0.0003 & 0 & 0.9996 & 
- J.CHECK & 0.3276 & 0 & 0.6723 & 0\\ [1ex] 
- \hline
- Q.CHECK.BET & 0 & 0.5680 & 0 & 0.4319 & 
- Q.CHECK & 0.0037 & 0 & 0.9962 & 0\\ [1ex] 
- \hline
- K.CHECK.BET & 0 & 0.9993 & 0 & 0.0006 & 
- K.CHECK & 0.9995 & 0 & 0.0005 & 0\\ [1ex] 
- \hline
-\end{tabular}
-\end{center}
-%%% LITTLE TABLES. 
-
-\newpage
-
-
-\begin{thebibliography}{9}
-
-\bibitem{Zinkevich}
-Martin A. Zinkevich, Michael Bradley Johanson, Michael Bowling, and Carmelo Piccione, \emph{Regret Minimization in Games with Incomplete Information}. Neural Information Processing Systems, 2007.
-
-\bibitem{Wiedenbeck}
-Bryce Wiedenbeck. \textit{Lecture 26: Counterfactual Regret Minimization (CFR)}. 
-Davidson CSC 383: Algorithmic Game Theory, S23. 
-
-\bibitem{Farina} Farina, G. (2024). \textit{Lecture 9: Extensive Form Games}. MIT 6.S890 - Topics in Multiagent Learning, Lecture 9.
-
-\bibitem{Int8} Int8. (n.d.). \textit{Counterfactual Regret Minimization for Poker AI}.
-
-\end{thebibliography}
 
 
 

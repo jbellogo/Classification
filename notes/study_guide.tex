@@ -199,11 +199,176 @@ why not do $n$ indicators, one for each category number? Because that would caus
 Do when variables have vastly differnt ranges, helps give bettwr results by making variates more comparable to each other. 
 Scaling is also called standardization.
 
-Scalling methods:
+Scaling methods:
 \begin{itemize}
 \item Scale them to have mean zero and stdev =1 using $x_{scaled} = \frac{x-\bar x}{sd_x}$. Note that indicator variables are not scaled like this, their mean and variance may not be 0,1.
 \item Scale variables to have the same range.
 \end{itemize}
+
+\section{Logistic Regression}
+Appropiate for 2 class classification $0,1$.
+\begin{itemize}
+\item $P(y==1) =p$
+\item $E(y) = p$
+\end{itemize}
+
+We are using a multilinear regression on all the variates (you can do polynomial thourugh preprocessing by say adding columns $x_2^3$ to the dataframe)
+
+\[
+\text{logit}(p) = \text{log} (\frac{p}{1-p}) = X \bold\beta 
+\]
+
+\textbf{logit} tips:
+\begin{itemize}
+\item Recall that log($p$) is defined on $x>0$. So logit($p$) is only ever defined on $p>1-p := p \in (0,1)$
+\item logit has Range = $(-\infty, \infty)$ and domain $(0,1)$, so what it does, implicitly, is take values $p$ from $[0,1]$ onto the real line.
+\end{itemize}
+
+To \textbf{recover} the succcess/label 1 probability, p, we use the \textbf{expit} function:
+\[ expit(x) = \frac{\exp(x)}{1+exp(x)}\]
+\[ p = text{expit}(\beta_0 + \beta_1x) = \frac{\exp(\beta_0 + \beta_1x)}{1+\exp(\beta_0 + \beta_1x)}\]
+
+As you would expect, p is equal to a function that takes the linear model onto the range $0,1$ which is fit for a probability. 
+
+\subsubsection{Odds}
+\[odds = \frac{p}{1-p}\]
+log odds is exactly what it sounds. 
+
+\textbf{A coefficient can be interpreted as a log odds ratio of a one unit differnce in the direction of its $x$ variable:}
+If
+
+$logit(p_i) = \beta_0 + \beta_1x + \dots + \beta_p x_p$
+
+and 
+$logit(p_j) = \beta_0 + \beta_1(x+1) + \dots + \beta_p x_p$
+Then $logit(p_j)-logit(p_i) = \beta_1$
+
+\[
+\beta_1 = log(\frac{odds_j}{odds_i})
+\]
+
+For interpretation:
+Exponential coefficients give the log odds ratio of one unit increase in the x variate of the coeficient.
+
+So if $logit(p_{admission}) = 10+.15x_{average}$
+
+you can say: "on average, each 1\% increase in average \textbf{increases the odds} of admission by \textbf{a factor of} $exp(\beta_1) = exp(0.15)$, with all other variables held constant."
+
+So if the odds ($\frac{p}{1-p}$) of admission for an average of $x_1 = 80$ are, say 7.38, then the revised odds for an average of $81$ are = $7.38 \times exp(.15)$
+
+WE can only make statements about odds. We cannot say anything about how the probabilities $p$ themselves will change when you increase one variate by 1 because the increase is non-constant. 
+
+\subsubsection{model evaluation}
+Logistic regression is less prone to overfitting than other learning methods.
+\begin{itemize}
+\item Linearity assumption makes the model highly inflexible.
+\item There is no tunning parameter by default... you could regularize.
+\item Usually no test/train/cv split for logistic regression needed.
+\item it is hard to beat logistic regression (bi class) in terms of prediction. 
+\item it is easier to beat linear regression or multi-class logisti regression.
+\end{itemize}
+
+\subsubsection{Shaky}
+the log likelihood maximization and matrix terms.
+
+
+\section{Regularization}
+\begin{itemize}
+\item L1: Lasso
+\item L2: Ridge
+\end{itemize}
+
+\subsubsection{Motivation}
+In regression, OLS is the 'best' (lowest variance) \textbf{unbiased} estimator. 
+However, we may be willing to trade a bit of bias for a larger reduction in variance (better prediction)
+
+Recall the bias variance tradeoff:  bias and variance cannot be simultaneously minimized.
+
+As model felxibility/complexity/tunnability/\# hyperparameters increases:
+\begin{itemize}
+\item Bias decreases: Better fit to the training set. 
+\item Variance increases: Less generalizability to other samples of the population.
+\end{itemize}
+
+For low flexibility (\textbf{UNDERFITTING}:) High bias, low variance. For high flexibility, \textbf{OVERFITTING}, low bias, high variancce. 
+
+Regularization explicitly addresses the tradeoff between overfitting and underfitting. Overfitting occurs when a model is overly flexible, characteristic of highly nonlinear and complex models. However, we also want to avoid underfitting, as using complex models can help capture the true relationships between labels and variables. To balance these opposing goals, regularization allows us to use complex models while adding a penalty for model complexity. This ensures that, among a set of complex models, we select the one that is sufficiently complex without being excessively so.
+
+the new criterion to minimize becomes $MSE + Penalty(\beta)/n = RSS + Penalty(\beta)$
+\[ \min_{\bm \beta} \{ RSS + penalty \}\]
+
+where $RSS = \sum_{i=1}^n (y_i- \beta^t x)^2$
+
+\subsubsection{Ridge, L2}
+
+\[ Penalty(\beta) = ||\beta|| = \sqrt{\sum_{i=1}^p \beta_i^2}\]
+Note, we don't penalize the intercept $\beta_0$, i.e. it is not included in the computation of the penalty. You can see this in the fact that the summation in ridge starts at $i=1$ and not at 0.
+
+For minimization purposes, get rid of the square root to simplify things. \\
+\[ \text{Criterion} = 
+\frac{1}{n}
+( RSS + \sum_{i=1}^p \beta_i^2 )
+\]
+
+Now, we introduce a penalty as a function of the coefficients, but we can also include a parameter, known as the \textbf{regularization parameter} $\lambda$, to adjust its strength. This parameter allows us to fine-tune the penalty, as some datasets may require a stronger penalty than others.
+
+\[ \text{CriterionL2} = 
+\frac{1}{n}
+( RSS +  \lambda \sum_{i=1}^p \beta_i^2 )
+\]
+
+\begin{enumerate}
+\item Tunning: estimate lambda via CV (training on multiple sets)
+\item Training: find the beta's in the model that minimize the criterion, with the tuned parameter.
+\end{enumerate}
+
+\textbf{Notes:}
+\begin{itemize}
+\item The penalty is a function of squared coefficients, so it penalizes larger coefficients more than smaller coefficients. 
+\end{itemize}
+
+if you don't want to penalize larger coefficients as strongly, you can use an L1 penalty, which penalizes them lineary. As a bonus, L1 penalty also performs variable selection for ya. 
+
+\[ \text{CriterionL1} = 
+\frac{1}{n}
+( RSS +  \lambda \sum_{i=1}^p |\beta_i| )
+\]
+
+\subsubsection{L1 vs L2}
+\begin{itemize}
+\item Usually L2 works better in terms of accuracy/MSE.
+\item L1 beats L2 when it does variable selection, i.e. when there are a lot of \textbf{irrelavant} variables in the data. 
+\item Coefficients in L1 can shrink to zero. Coefficients in L2 do not shrink all the way to zero. Therefore, L1 is used for var selection.
+\item L1 pernalty is numerically harder to compute, no clean derivatives of absolute values. 
+\end{itemize}
+
+Recall that the abstraction of RSS, its generalized  criterior to optimize is \textbf{likelihood}. We can add penalties to likelihiod to add regularization to generalized models like logistic regression.
+
+For L2 penalty, in general:
+
+\[Criterion =  -loglikelihood + \frac{\lambda}{n} \sum_{i=1}^p \beta_j^2\]
+
+But in practice, we often scaale the squred coefficients in the penalty by the variance of the variate. 
+\[Criterion =  -loglikelihood + \frac{\lambda}{n} \sum_{i=1}^p \beta_j^2 Var(x_j)\]
+
+
+\section{Text}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

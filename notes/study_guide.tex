@@ -266,6 +266,8 @@ Logistic regression is less prone to overfitting than other learning methods.
 \item Usually no test/train/cv split for logistic regression needed.
 \item it is hard to beat logistic regression (bi class) in terms of prediction. 
 \item it is easier to beat linear regression or multi-class logisti regression.
+\item Affected a great deal with multicolinearity.
+\item Only has \textbf{linear} decision boundaries 
 \end{itemize}
 
 \subsubsection{Shaky}
@@ -352,7 +354,186 @@ But in practice, we often scaale the squred coefficients in the penalty by the v
 \[Criterion =  -loglikelihood + \frac{\lambda}{n} \sum_{i=1}^p \beta_j^2 Var(x_j)\]
 
 
-\section{Text}
+\section{Text/NLP}
+Initially NLP was hard-code with rules like "if text contains ("keyword1 | keyword2") then ..."
+
+REpresentation of a set of documents as vectors is known as \textbf{vector space model}. 
+
+We study the use of vector space models to create \textbf{ngram-vars} or \textbf{bag-of-words}
+
+Single word variables called \textbf{unigrams}. We record the frequency. 
+
+Now we refine the unigrams: 
+\begin{itemize}
+\item We want to further use \textbf{stemming} which reduces word conjugations to their root: words "chased", "chases", "chasing" are all considered as the same unigram variable "chase." 
+\item Remove stopwords like "the" "and"
+\end{itemize}
+
+\subsubsection{bag-of-words}
+Ignore word order, just looks at unigram variables defined as the word frequency (or just indicator variables in some applications) for each sentence/text. \\
+
+If it is important to recognize two word groupings add \textbf{bi-grams} : say you want to differentiate if cat chases or dog chases, you would ad bigrams "cat chase" and "dog chase." 
+
+In general, you can add whichever \textbf{ngram} variables you want which group n words. This is a manual process whih only makes sense if you're working with small sentences or if you know you're working with a specific type of sentence, say with the nouns cat and dog. \\
+
+You can encode grammar into variables: Begining of line noun, Tony followed by verb, etc.
+
+
+\textbf{Bag-of-words eval:}
+\begin{itemize}
+\item works well on small to medium texts. 
+\item doesn't work for long texts: too much overlap between words.
+\item old-school approach, LLMs are SOA.
+\end{itemize}
+
+\subsubsection{multicolinearity}
+for general texts, most words do not appear in every sentence, so most entries in the $x-$matrix are zero.
+
+One solutions is to dimensionality reduction, like PCA. Reduce raw feature space to lower soace with uncorrelated variables.
+
+\subsubsection{TF-IDF}
+Short texts: indicator vars. Long text: frequencies.
+Issue: diminishing returns of using frequency for classification. Knowing a word occurs is useful, knowing it occurs twice is not twice as useful. So we come up with a better measure for classification.
+
+TF-IDF: Function that dampens the effect of additional words.
+
+\textbf{Term frequency}
+Let $f_{t,d}$ be the frequency of word $t$ in document $d$. A document is a sentence or the "text for one obsefvartion."
+
+\[
+TF = 
+\begin{cases}
+1+log(f_{t,d})\\
+x(n-1)
+\end{cases}
+\]
+
+\textbf{Inverse document frequency}: "Inverse" because rare words should be given more weights than common (high frequency) words.
+\[
+IDF = log(N/N_t)
+\]
+Where $N$ is the number of documents. $N_t$ is the number of documents containing word $t$.
+
+So, \textbf{TF-IDF:}
+\[
+TfIdf = TF \times IDF
+\]
+
+Usually compute TFIDF after stemming.
+
+
+\textbf{similarity:} To quantify similarity of text documents. A similarity score metric st 0 means documents are dissimilar and 1 they are similar.
+
+Good measure: Cosine of the angle between the vector representations of two documents. 
+
+\[
+cos(\theta) = \frac{x \dot y}{|x||y|}
+\]
+
+\section{kNN}
+Recall: Bayes classifier for new observation $x_0$ = $argmax_j P (Y=j|X=x_0)$
+
+The idea behind kNN is to estimate it locally. \\
+
+And indeed. kNN \textbf{aims to approximate the Bayes classifier locally.}
+
+for a new observation $x_0$, find the set of nearest $k$ observations in the training data, call this set $N_0$.
+
+Then your probability estimate for every class just becomes the local probaility in the set of k nearest neighbours: 
+\[
+P(Y=j| X=x_0 ) = \frac{1}{1} \sum_{i \in N_0} I(y_i =j)
+\]
+
+This is a \textbf{memory based algorithm}. No training required, only memory to store all "training set" and then do the "functional lookup" of the knn. \\
+
+It accomodates \textbf{nonlinear} decision boundaries. 
+
+In comparisson, logistic regression only has linear dicision boundaries. 
+
+The hyperparameter $k$ regulates the bias/variance tradeoff:
+Small k: low bias (fit) high variance (prediction power.) 
+
+Increasing k: increases bias and lowers variance. 
+
+\subsubsection{ties}
+break them at random, increase k until tie is broken (easy to do since every prediction is a look up and  then computing the set with te k nearest observations) Use 1NN (the nearest observation label.)
+
+
+\subsubsection{metrics}
+Jaccard Similarity: intersection divided by union of two texts.
+
+Euclidean distance favours 1-word answers.
+
+for k=1 we shuold make no error on the training data but NOT always true. why? because of duplicates. one person may go to pharmacy a and pharmacy b as well. can happen.  
+
+
+\subsubsection{Example: Smokers Helpline}
+Outline:
+\begin{enumerate}
+\item Ngram encoding. 
+\begin{enumerate}
+\item Unigrams
+\item Remove stopwords
+\item stemming. 
+\end{enumerate}
+\item Standardize x-vars
+\item test/train split using LOO validation for tunning k and metric (euclidean and jacard)
+\end{enumerate}
+
+
+\subsubsection{Evaluation}
+
+\begin{itemize}
+\item particularly \textbf{sensitive to variable scaling/ standardization}.Eg distance measured in km vs miles may yield vastly differnt results without standardization. because variate measures being differnt means differnt relative distances between points. 
+\item Choose an odd number for $k$ to reduce chances of ties. 
+\item tpically eucledean distance is used but you can use others, or a similarity metric.
+\item LOO cross validation is appropiate for knn as it is not computationally intensive.
+\item highly local behaviour.
+\item good when decision boundary is highly irregular and the training data are sufficiently large.
+\item highly unstructured, just predicts, doesn't learn anything. 
+\end{itemize}
+
+
+\section{Naive Bayes}
+Conditional densities:
+\[f_k(X) = P(X=x|Y=k)\] probability of observing outcome $x$ in for a given label.
+
+Assumption that, conditional on class k, variables $x_j$ are independent. 
+\[
+f_k(X) = \Pi_{j}^p f_{kj}(x_j)
+\]
+
+This says (idiot's bayes):
+\[
+P(X=(x_1, x_2, \dots, x_p)|Y=k) = P(X_1=x_1|Y=k) \times P(X_2=x_2|Y=k) \dots P(X_p=x_p|Y=k)
+\]
+Assumption is always wroten but convenient.
+
+We now just plug in this formula for $f_k(X)$ into the bayes formula to get the naive bayes of the probabilities our classifier aims to maximize $P(Y=y|X=x)$. You can actually ignore the denominator in the naive bayes formula and so the algorithm becomes: 
+
+\[
+argmax_k (\pi_k \prod_{j=1}^p P(X_j =x_j| Y=y)) 
+= 
+argmax_k (\pi_k \prod_{j=1}^p f_{kj}(x_j))
+\]
+
+
+Where there are many variates $x_j$, multiplying $f_{kj}(x_j)$ for all of them can be result in an \textbf{underflow} if all of the probabilities are small, say for the given class $x_1$ is rarely true. \\
+
+we take the log to avoid underflow in practice.
+
+Estimate priors from the training data
+
+$\pi_k = n_k/n$
+
+Example:
+If $P(no| ind, LA, potatoes) \propto d$
+
+
+
+
+
+
 
 
 

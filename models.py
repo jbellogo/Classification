@@ -89,3 +89,14 @@ def stacking(X, y, estimators):
     cv_scores = cross_val_score(stacked_model, X, y, cv=5, scoring='accuracy')
     print(f"Stacked model cross-validation accuracy: {cv_scores.mean():.2f} (+/- {cv_scores.std() * 2:.2f})")
     return stacked_model
+
+
+
+##### for plotting trees from random forest
+# fig, axes = plt.subplots(nrows = 1,ncols = 1,figsize = (4,4), dpi=900)
+# index = 0 
+# tree.plot_tree(rf.estimators_[index],
+#                feature_names = fn, 
+#                class_names=cn,
+#                filled = True)
+# fig.savefig('rf_tree.png')

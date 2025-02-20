@@ -64,3 +64,28 @@ def hist_grad_boost(X, y):
 
     hgb = HistGradientBoostingClassifier(**grid_search.best_params_)
     return hgb
+
+
+def stacking(X, y, estimators):
+    '''
+    estimators = [
+        ('rf', rf),
+        ('hgb', hgb)
+    ]
+    '''
+    # Create the stacked model
+
+    # Using logistic regression as the final estimator
+    stacked_model = StackingClassifier(
+        estimators=estimators,
+        final_estimator=LogisticRegression(),
+        cv=5  # Number of folds for cross-validation during stacking
+    )
+
+    # Fit the stacked model
+    stacked_model.fit(X, y)
+
+    # Evaluate using cross-validation
+    cv_scores = cross_val_score(stacked_model, X, y, cv=5, scoring='accuracy')
+    print(f"Stacked model cross-validation accuracy: {cv_scores.mean():.2f} (+/- {cv_scores.std() * 2:.2f})")
+    return stacked_model

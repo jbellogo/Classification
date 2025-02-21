@@ -27,6 +27,7 @@ def minimal_preprocessing():
     ed = preprocess_df(ed, 'ED')
     hh = preprocess_df(hh, 'HH')
 
+
     # Convert subjective poverty score from one-hot to categorical [1-10] outcome
     for i in range(1,11):
         col = 'subjective_poverty_'+ str(i)
@@ -43,7 +44,7 @@ def minimal_preprocessing():
     X_raw = pd.merge(ed, hh, on='uid', how='inner')
     Xy = pd.merge(X_raw, y, on='uid', how='left')
     assert(Xy['poverty_score'].isna().sum() == 0)
-    y = Xy['poverty_score']
+    y = Xy[['uid', 'poverty_score']]
     X_raw = Xy.drop(columns=['poverty_score', 'HH_Hhid'])
 
 
@@ -89,10 +90,10 @@ def rename_columns(X):
         'HH_Q13': 'mother_education', 
         'HH_Q14': 'mother_alive',
         'HH_Q15': 'mother_death_age', 
-        'HH_Q16': 'age_mother',
+        'HH_Q16': 'mother_age',
         'HH_Q17': 'lives_with_father', 
         'HH_Q19': 'father_education', 
         'HH_Q20': 'father_alive', 
-        'HH_Q21': 'father_death_age', 
+        'HH_Q21': 'father_age', 
         }
     return X.rename(columns=renames)

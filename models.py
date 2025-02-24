@@ -38,6 +38,7 @@ def random_forest(X, y):
     print(f"Best cross-validation accuracy: {grid_search.best_score_:.2f}")
 
     rf = RandomForestClassifier(**grid_search.best_params_, random_state=42)
+    return rf
 
 
 def hist_grad_boost(X, y):

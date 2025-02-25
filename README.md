@@ -1,6 +1,9 @@
-# Classification
+# Kaggle Classification Competitition
 
-In this kaggle contest, we use a dataset to predict answers to the question "On a scale of 1 to 10, how rich or poor do you think you are right now? 1 means very poor, and 10 means very rich.". There are 10 levels responses for this question, which are from 1 to 10.
+
+This is the source code for a private [Kaggle competition](https://www.kaggle.com/competitions/f-2024-kaggle-contest-for-classification), organized as the final project for STAT 441: Statistical Learning and Classification at the University of Waterloo.
+
+We use a dataset to predict answers to the question "On a scale of 1 to 10, how rich or poor do you think you are right now? 1 means very poor, and 10 means very rich.". There are 10 levels responses for this question, which are from 1 to 10.
 
 Each observation represents a survey response of one person. The goal is to predict the correct response for this question based on the training dataset.
 
